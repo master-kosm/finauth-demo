@@ -1,5 +1,8 @@
 package ru.kosm.finauth.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /** User is an authorization subject
  * 
  * @author kosm
@@ -10,6 +13,7 @@ public class User {
 	private String login;
 	private String firstName;
 	private String lastName;
+	private final List<String> accountIds = new ArrayList<>();
 	
 	public String getId() {
 		return id;
@@ -34,6 +38,10 @@ public class User {
 	}
 	public void setLastName(String lastName) {
 		this.lastName = lastName;
+	}
+	
+	public List<String> getAccountIds() {
+		return accountIds;
 	}
 
 }

@@ -43,7 +43,7 @@ public class FinauthApp {
 		config.registerInstances(new Resource(appContext));
 		httpServer = GrizzlyHttpServerFactory.createHttpServer(baseUri, config, false);
 		
-		logger.info("Finauth demo application started.");;
+		logger.info("Finauth demo application started.");
 	}
 	
 	/** Start the listening HTTP server
