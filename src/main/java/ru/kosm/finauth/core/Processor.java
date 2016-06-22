@@ -13,6 +13,7 @@ import ru.kosm.finauth.core.activity.ActivityException;
 import ru.kosm.finauth.core.activity.AddUserFlow;
 import ru.kosm.finauth.core.activity.AdjustAccountActivity;
 import ru.kosm.finauth.core.activity.GetAccountActivity;
+import ru.kosm.finauth.core.activity.GetOperationActivity;
 import ru.kosm.finauth.core.activity.GetUserActivity;
 import ru.kosm.finauth.core.activity.TransferFlow;
 import ru.kosm.finauth.domain.Operation;
@@ -37,6 +38,7 @@ public class Processor {
 			put("Get account", new GetAccountActivity());
 			put("Adjust", new AdjustAccountActivity("accountId"));
 			put("Transfer", new TransferFlow());
+			put("Get operation", new GetOperationActivity());
 		}
 	};
 	

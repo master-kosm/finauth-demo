@@ -20,7 +20,7 @@ public class ApplyFeeActivity implements Activity {
 	private final static transient Logger logger = LogManager.getLogger(ApplyFeeActivity.class);
 	
 	// For test purposes the fee is static 
-	private final static long fee = 100;  
+	public final static long fee = 100;  
 
 	@Override
 	public void execute(AppContext appContext, Operation operation, Map<String, Object> operOutput)
