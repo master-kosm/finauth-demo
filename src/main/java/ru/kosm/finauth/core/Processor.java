@@ -69,7 +69,7 @@ public class Processor {
 	 */
 	static void finalizeOperOutput(Operation operation, Map<String, Object> operOutput) {
 		operOutput.put("status", operation.getContext().get("status"));
-		operOutput.put("operationId", operation.getContext().get("operationId"));
+		operOutput.put("operationId", operation.getId());
 	}
 	
 	/**
