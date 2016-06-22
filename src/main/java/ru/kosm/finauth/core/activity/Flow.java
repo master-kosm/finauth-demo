@@ -1,7 +1,10 @@
-package ru.kosm.finauth.core;
+package ru.kosm.finauth.core.activity;
 
 import java.util.List;
 import java.util.Map;
+
+import ru.kosm.finauth.core.AppContext;
+import ru.kosm.finauth.domain.Operation;
 
 /**
  * Action flow executed to handle a specific request
@@ -29,9 +32,9 @@ public abstract class Flow implements Activity {
 	}
 
 	@Override
-	public void execute(AppContext appContext, Map<String, Object> operContext,
+	public void execute(AppContext appContext, Operation operation,
 			Map<String, Object> operOutput) throws ActivityException {
-		for (Activity step : steps) step.execute(appContext, operContext, operOutput);
+		for (Activity step : steps) step.execute(appContext, operation, operOutput);
 	}
 
 }

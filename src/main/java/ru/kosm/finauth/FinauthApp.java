@@ -16,8 +16,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import ru.kosm.finauth.core.AppContext;
 import ru.kosm.finauth.rest.Resource;
 
-/** Main application class. To start the application it is necessary to instantiate
- * this class.
+/** Main application class
  * 
  * @author kosm
  */
@@ -31,11 +30,14 @@ public class FinauthApp {
 	private final HttpServer httpServer;
 	private final AppContext appContext = new AppContext();
 	
+	public final static int defaultPort = 8800;
+	public final static String defaultHost = "localhost";
+	
 	/** The constructor initializes the application
 	 */
 	public FinauthApp() {
-		final int port = Integer.getInteger("ListenPort", 8800);
-		final String host = System.getProperty("BindHost", "localhost");
+		final int port = Integer.getInteger("ListenPort", defaultPort);
+		final String host = System.getProperty("BindHost", defaultHost);
 				
 		// Using the embedded HTTP server Grizzly 2
 		URI baseUri = UriBuilder.fromUri("http://" + host + "/").port(port).build();

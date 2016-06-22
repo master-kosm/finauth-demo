@@ -16,7 +16,7 @@ import ru.kosm.finauth.core.AppContext;
 @Path("/finauth")
 public class Resource {
 	
-	private final static transient Logger logger = LogManager.getLogger(Resource.class);
+	private final static transient Logger logger = LogManager.getLogger(ResourceTest.class);
 	
 	private final AppContext appContext;
 	

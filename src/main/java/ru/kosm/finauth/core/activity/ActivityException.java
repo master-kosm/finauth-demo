@@ -1,4 +1,4 @@
-package ru.kosm.finauth.core;
+package ru.kosm.finauth.core.activity;
 
 /** The exception class that may be thrown by an activity during the execution
  * 

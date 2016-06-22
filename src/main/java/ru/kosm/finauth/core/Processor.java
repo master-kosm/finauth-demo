@@ -3,10 +3,19 @@ package ru.kosm.finauth.core;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import ru.kosm.finauth.core.activity.Activity;
+import ru.kosm.finauth.core.activity.ActivityException;
+import ru.kosm.finauth.core.activity.AddUserFlow;
+import ru.kosm.finauth.core.activity.AdjustAccountActivity;
+import ru.kosm.finauth.core.activity.GetAccountActivity;
+import ru.kosm.finauth.core.activity.GetUserActivity;
+import ru.kosm.finauth.core.activity.TransferFlow;
+import ru.kosm.finauth.domain.Operation;
 
 /**
  * Operation processor executes the sequence of actions for a particular operation
@@ -16,6 +25,8 @@ import org.apache.logging.log4j.Logger;
 public class Processor {
 	
 	private final AppContext appContext;
+	/** Lock acquired on the application of cache actions at the end of transaction */
+	private final ReentrantLock cacheActionLock = new ReentrantLock(); 
 	/** Flows executed to handle operations */
 	private Map<String, Activity> flows = new HashMap<String, Activity>() {
 		private static final long serialVersionUID = 3391398508868773848L;
@@ -36,17 +47,6 @@ public class Processor {
 	}
 	
 	/**
-	 * Initialize the operation context: set unique operation number and
-	 * default operation status
-	 * 
-	 * @param operContext Operation context to init
-	 */
-	static void initOperContext(Map<String, Object> operContext) {
-		operContext.put("operationId", UUID.randomUUID());
-		operContext.put("status", "OK");
-	}
-	
-	/**
 	 * Construct objects for output parameters of a particular operation
 	 * within a response batch 
 	 * 
@@ -64,12 +64,34 @@ public class Processor {
 	/** 
 	 * Final preparations of the operations output: set status and operation Id
 	 * 
-	 * @param operContext Operation context
+	 * @param operation Operation to finalize
 	 * @param operOutput Operation output
 	 */
-	static void finalizeOperOutput(Map<String, Object> operContext, Map<String, Object> operOutput) {
-		operOutput.put("status", operContext.get("status"));
-		operOutput.put("operationId", operContext.get("operationId"));
+	static void finalizeOperOutput(Operation operation, Map<String, Object> operOutput) {
+		operOutput.put("status", operation.getContext().get("status"));
+		operOutput.put("operationId", operation.getContext().get("operationId"));
+	}
+	
+	/**
+	 * Executed cache actions stashed in the operations
+	 * 
+	 * @param operation Operation containing the cache actions to execute
+	 */
+	void executeCacheActions(Operation operation) {
+		cacheActionLock.lock();
+		try {
+			operation.getCacheActions().forEach(a -> a.apply(appContext, operation));
+			// Implicitly storing the operation in the operation cache
+			appContext.getOperationCache().put(operation.getId(), operation);
+			// Locking the caches for write forever in case of failure in one of the cache actions.
+			// The caches are still accessible for read.
+			// See CacheAction.apply() for more details.
+			cacheActionLock.unlock();
+		}
+		catch (Exception e) {
+			logger.fatal("Error ocurred during the application of cache actions!!! " +
+					"Further cache writes are prohibited.", e);
+		}
 	}
 
 	/**
@@ -85,40 +107,27 @@ public class Processor {
 		input.forEach((k, v) -> {
 			logger.trace("Processing request: {}", k);
 			Map<String, Object> operOutput = constructOperOutput(k, output);
-			Map<String, Object> operContext = null;
-			//Transaction txn = null;
+			// Constructing new operation
+			Operation operation = null;
 			try {
-				appContext.getTransactionManager().begin();
-				//txn = appContext.getTransactionManager().getTransaction();
-				//appContext.getAccountCache().startBatch();
 				if (!(v instanceof Map)) {
 					throw new IllegalArgumentException("Malformed parameters of the request: " + k);
 				}
-				operContext = (Map<String, Object>)v;
-				
-				initOperContext(operContext);
+				operation = new Operation(k, (Map<String, Object>)v);
 				Activity flow = flows.get(k);
 				if (flow == null) throw new ActivityException("No appropriate flow for the request: " + k);
-				flow.execute(appContext, operContext, operOutput);
-				//txn.commit();
-				appContext.getTransactionManager().commit();
-				//appContext.getAccountCache().endBatch(true);
+				flow.execute(appContext, operation, operOutput);
+				// "Committing" the transaction
+				executeCacheActions(operation);
+				operation.setCompletedStatus();
 			}
 			catch (Exception e) {
-				//appContext.getAccountCache().endBatch(false);
-				try {
-					appContext.getTransactionManager().rollback();
-					//if (txn != null) txn.rollback();
-				}
-				catch (Exception e1) {
-					logger.error(e);
-				}
-				if (operContext != null) operContext.put("status", "ERROR");
+				if (operation != null) operation.setErrorStatus();
 				operOutput.put("errorDescription", e.getMessage());
 				logger.error(e);
 			}
 			finally {
-				if (operContext != null) finalizeOperOutput(operContext, operOutput);
+				if (operation != null) finalizeOperOutput(operation, operOutput);
 			}
 		});
 		return output;

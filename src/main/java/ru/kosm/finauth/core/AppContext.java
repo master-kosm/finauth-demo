@@ -1,15 +1,10 @@
 package ru.kosm.finauth.core;
 
-import javax.transaction.TransactionManager;
-
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.transaction.TransactionMode;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import ru.kosm.finauth.domain.Account;
+import ru.kosm.finauth.domain.Operation;
 import ru.kosm.finauth.domain.User;
 
 /**
@@ -19,49 +14,36 @@ import ru.kosm.finauth.domain.User;
  */
 public class AppContext {
 
-	private final EmbeddedCacheManager cacheManager;
-	private final Cache<String, User> userCache;
-	private final Cache<String, Account> accountCache;
+	private final Map<String, User> userCache = new ConcurrentHashMap<>();
+	private final Map<String, Account> accountCache = new ConcurrentHashMap<>();
+	private final Map<String, Operation> operationCache = new ConcurrentHashMap<>();
 	private final Processor processor = new Processor(this);
-	private final TransactionManager transactionManager;
 	
 	public AppContext() {
-		//Configuration config = new ConfigurationBuilder().invocationBatching().enable().transaction().build();
-		/*Configuration config = new ConfigurationBuilder().
-				transaction()
-				.transactionMode(TransactionMode.TRANSACTIONAL).autoCommit(false)
-				.useSynchronization(false).lockingMode(LockingMode.PESSIMISTIC)
-				.invocationBatching().enable()
-				.build();*/
-		Configuration config = new ConfigurationBuilder().transaction()
-				.transactionMode(TransactionMode.TRANSACTIONAL).build();
-		cacheManager = new DefaultCacheManager(config);
-		userCache = cacheManager.getCache();
-		accountCache = cacheManager.getCache();
-		transactionManager = accountCache.getAdvancedCache().getTransactionManager();
+		
 	}
 	
 	/**
 	 * Dispose application context resources before the shutdown
 	 */
 	public void dispose() {
-		cacheManager.stop();
+		// Nothing to do for now
 	}
 
-	public Cache<String, User> getUserCache() {
+	public Map<String, User> getUserCache() {
 		return userCache;
 	}
 
-	public Cache<String, Account> getAccountCache() {
+	public Map<String, Account> getAccountCache() {
 		return accountCache;
+	}
+
+	public Map<String, Operation> getOperationCache() {
+		return operationCache;
 	}
 
 	public Processor getProcessor() {
 		return processor;
 	}
 
-	public TransactionManager getTransactionManager() {
-		return transactionManager;
-	}
-	
 }

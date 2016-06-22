@@ -2,6 +2,7 @@ package ru.kosm.finauth.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /** User is an authorization subject
  * 
@@ -9,17 +10,18 @@ import java.util.List;
  */
 public class User {
 	
-	private String id;
+	private final String userId;
 	private String login;
 	private String firstName;
 	private String lastName;
 	private final List<String> accountIds = new ArrayList<>();
 	
-	public String getId() {
-		return id;
+	public User() {
+		userId = UUID.randomUUID().toString();
 	}
-	public void setId(String id) {
-		this.id = id;
+	
+	public String getUserId() {
+		return userId;
 	}
 	public String getLogin() {
 		return login;
