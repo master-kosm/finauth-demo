@@ -34,7 +34,8 @@ public class AdjustAccountActivity implements Activity {
 	public void execute(AppContext appContext, Operation operation, Map<String, Object> operOutput)
 			throws ActivityException {
 		Account account = Objects.requireNonNull(appContext.getAccountCache()
-				.get(operation.getContext().get(idParamName)), "No such account");
+				.get(Objects.requireNonNull(operation.getContext().get(idParamName),
+						"Missing parameter: " + idParamName)), "No such account");
 		String amountStr = (String)Objects.requireNonNull(operation.getContext().get("amount"), "No amount");
 		long amount = Long.parseLong(amountStr);
 		if (account.getBalance() + amount < 0) {
